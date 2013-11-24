@@ -5,6 +5,7 @@ clue :- get_startup_data, main_menu.
 :- dynamic my_character/1.   % The user's character
 :- dynamic player/1.      % players are represented by the character they are playing as
 :- dynamic in_hand/1.     % Cards in the user's hand
+:- dynamic leftover/2.
 
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
@@ -98,8 +99,19 @@ main_menu :-
 % TODO: Record player suggestions here
 record_suggestion :- true.
 
-% TODO: display database (just display cards_data?)
-view_database :- true.
+% View database
+view_database :- forall(in_hand(Card), writeln(Card)).
+
+% View Remaining Items
+view_remaining_characters :- forall(remaining_character(Card), writeln(Card)).
+view_remaining_weapons :- forall(remaining_weapon(Card), writeln(Card)).
+view_remaining_rooms :- forall(remaining_room(Card), writeln(Card)).
+
+% gives remaining items
+remaining_character(Card) :- character(Card), not(in_hand(Card)), not(my_character(Card)).
+remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
+remaining_room(Card) :- room(Card), not(in_hand(Card)).
+
 
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
 
