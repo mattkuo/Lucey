@@ -5,7 +5,6 @@ clue :- get_startup_data, main_menu.
 :- dynamic my_character/1.   % The user's character
 :- dynamic player/1.      % players are represented by the character they are playing as
 :- dynamic in_hand/1.     % Cards in the user's hand
-:- dynamic leftover/2.
 
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
@@ -112,8 +111,16 @@ remaining_character(Card) :- character(Card), not(in_hand(Card)), not(my_charact
 remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
 remaining_room(Card) :- room(Card), not(in_hand(Card)).
 
+% checks when there is one card left in each category
+one_character_left(Card) :- findall(1,remaining_character(Card),L), length(L,1), remaining_character(Card).
+one_weapon_left(Card) :- findall(1,remaining_weapon(Card),L), length(L,1), remaining_weapon(Card).
+one_room_left(Card) :- findall(1,remaining_room(Card),L), length(L,1), remaining_room(Card). 
 
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
+
+% gives final accusation
+accuse(X, Y, Z) :- one_character_left(X), one_weapon_left(Y), one_room_left(Z), 
+	write(X), tab(1), write('did it with a'), tab(1), write(Y), tab(1), write('in the'), tab(1), write(Z).
 
 clear_database :-
 	retractall(num_players(_)),
