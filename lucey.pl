@@ -90,16 +90,19 @@ main_menu :-
 	write_ln('#### MAIN MENU ####'),
 	write_ln('1) Record my suggestion'),
 	write_ln('2) View Database'),
-	write_ln('3) Exit program'),
+	write_ln('3) Add cards to Database'),
+	write_ln('4) Exit program'),
 	read(Option),
 	(
 	 	Option = 1 -> record_suggestion;
 	 	Option = 2 -> view_database;
-	 	Option = 3 -> halt;
+	 	Option = 3 -> input_hand;
+	 	Option = 4 -> halt;
 	 	write_ln('Please choose a valid option.'), main_menu
  	).
 
 % TODO: Record player suggestions here
+
 record_suggestion :-
 	write_ln('Who did you suspect?'),
 	read(Suspect),assert(suspect(Suspect)), nl,
@@ -112,9 +115,11 @@ record_suggestion :-
 	not(room(Room)) -> write_ln('Invalid room'), record_suggestion;
 	write_ln('Was a card shown to you?'),
 	read(Shown), nl,
-	(Shown = no -> suspect(Card), card_not_shown(Card), retract(suspect(Card));
-	 Shown = yes -> card_shown, main_menu;
-	 write_ln('Please choose a valid option.'), record_suggestion),
+	(
+		 Shown = no -> suspect(Card), card_not_shown(Card), retract(suspect(Card));
+		 Shown = yes -> card_shown, main_menu;
+		 write_ln('Please choose a valid option.'), record_suggestion
+	),
 	main_menu.
 
 % Updates database for the case that no card was shown after user suggestion
@@ -125,14 +130,43 @@ card_not_shown(Card) :-
 	retractall(cards_data(Card, Others, _)),
 	assert(cards_data(Card, Others, 0)).
 
+% Updates what player now knows and the opponent player who showed that card
 card_shown :-
 	write_ln('Which card was shown?'),
-	read(Card),
-	
-% TODO: display database (just display cards_data?)
-view_database :- true.
+	read(Card), nl,
+	not(is_valid_card(Card)) -> write_ln('Invalid Card.'), card_shown;
+	write_ln('Which player showed you the card?'),
+	read(Player), nl,
+	(
+		not(player(Player)) -> write_ln('Invalid player.'), card_shown;
+		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
+	).
+
+% View database
+% TODO: View what other people know as well
+view_database :- forall(in_hand(Card), writeln(Card)).
+
+% View Remaining Items
+view_remaining_characters :- forall(remaining_character(Card), writeln(Card)).
+view_remaining_weapons :- forall(remaining_weapon(Card), writeln(Card)).
+view_remaining_rooms :- forall(remaining_room(Card), writeln(Card)).
+
+% gives remaining items
+remaining_character(Card) :- character(Card), not(in_hand(Card)), not(my_character(Card)).
+remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
+remaining_room(Card) :- room(Card), not(in_hand(Card)).
+
+% checks when there is one card left in each category
+one_character_left(Card) :- findall(1,remaining_character(Card),L), length(L,1), remaining_character(Card).
+one_weapon_left(Card) :- findall(1,remaining_weapon(Card),L), length(L,1), remaining_weapon(Card).
+one_room_left(Card) :- findall(1,remaining_room(Card),L), length(L,1), remaining_room(Card). 
+
 
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
+
+% gives final accusation
+accuse(X, Y, Z) :- one_character_left(X), one_weapon_left(Y), one_room_left(Z), 
+	write(X), tab(1), write('did it with a'), tab(1), write(Y), tab(1), write('in the'), tab(1), write(Z).
 
 clear_database :-
 	retractall(cards_data(_,_,_)),
