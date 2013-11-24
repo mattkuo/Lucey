@@ -86,12 +86,14 @@ main_menu :-
 	write_ln('#### MAIN MENU ####'),
 	write_ln('1) Record my suggestion'),
 	write_ln('2) View Database'),
-	write_ln('3) Exit program'),
+	write_ln('3) Add cards to Database'),
+	write_ln('4) Exit program'),
 	read(Option),
 	(
 	 	Option = 1 -> record_suggestion;
 	 	Option = 2 -> view_database;
-	 	Option = 3 -> halt;
+	 	Option = 3 -> input_hand;
+	 	Option = 4 -> halt;
 	 	write_ln('Please choose a valid option.'), main_menu
  	).
 
