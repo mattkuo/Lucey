@@ -6,9 +6,6 @@ clue :- get_startup_data, main_menu.
 :- dynamic player/1.         % players are represented by the character they are playing as
 :- dynamic in_hand/1.        % Cards in the user's hand
 
-% temporary global variable (might not be a good idea)
-:- dynamic suspect/1.
-
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
 % Card can be any character, weapon or room
@@ -105,19 +102,19 @@ main_menu :-
 
 record_suggestion :-
 	write_ln('Who did you suspect?'),
-	read(Suspect),assert(suspect(Suspect)), nl,
-	not(character(Suspect)) -> write_ln('Invalid character'), record_suggestion;
-	write_ln('What weapon did the suspect use?'),
-	read(Weapon), assert(suspect(Weapon)), nl,
-	not(weapon(Weapon)) -> write_ln('Invalid weapon'), record_suggestion;
-	write_ln('What room are you in?'),
-	read(Room), assert(suspect(Room)), nl,
-	not(room(Room)) -> write_ln('Invalid room'), record_suggestion;
-	write_ln('Was a card shown to you?'),
+	read(Suspect), nl,
+	(not(character(Suspect)) -> write_ln('Invalid character'), record_suggestion;
+	write_ln('What weapon did the suspect use?')),
+	read(Weapon), nl,
+	(not(weapon(Weapon)) -> write_ln('Invalid weapon'), record_suggestion;
+	write_ln('What room are you in?')),
+	read(Room), nl,
+	(not(room(Room)) -> write_ln('Invalid room'), record_suggestion;
+	write_ln('Was a card shown to you?')),
 	read(Shown), nl,
 	(
-		 Shown = no -> suspect(Card), card_not_shown(Card), retract(suspect(Card));
-		 Shown = yes -> card_shown, main_menu;
+		 Shown = no -> card_not_shown(Suspect), card_not_shown(Weapon), card_not_shown(Room);
+		 Shown = yes -> card_shown;
 		 write_ln('Please choose a valid option.'), record_suggestion
 	),
 	main_menu.
@@ -134,8 +131,8 @@ card_not_shown(Card) :-
 card_shown :-
 	write_ln('Which card was shown?'),
 	read(Card), nl,
-	not(is_valid_card(Card)) -> write_ln('Invalid Card.'), card_shown;
-	write_ln('Which player showed you the card?'),
+	(not(is_valid_card(Card)) -> write_ln('Invalid Card.'), card_shown;
+	write_ln('Which player showed you the card?')),
 	read(Player), nl,
 	(
 		not(player(Player)) -> write_ln('Invalid player.'), card_shown;
@@ -144,7 +141,7 @@ card_shown :-
 
 % View database
 % TODO: View what other people know as well
-view_database :- forall(in_hand(Card), writeln(Card)).
+view_database :- forall(in_hand(Card), writeln(Card)), main_menu.
 
 % View Remaining Items
 view_remaining_characters :- forall(remaining_character(Card), writeln(Card)).
