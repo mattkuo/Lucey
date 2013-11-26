@@ -84,22 +84,22 @@ input_hand :-
 
 % Displays main menu. All procedures should return here.
 main_menu :-
+	can_accuse(_,_,_),
 	write_ln('#### MAIN MENU ####'),
 	write_ln('1) Record my suggestion'),
-	write_ln('2) View Database'),
-	write_ln('3) Add cards to Database'),
+	write_ln('2) Record opponent suggestion'),
+	write_ln('3) View Database'),
 	write_ln('4) Exit program'),
-	read(Option),
+	read(Option), nl,
 	(
 	 	Option = 1 -> record_suggestion;
-	 	Option = 2 -> view_database;
-	 	Option = 3 -> input_hand;
+	 	Option = 2 -> record_opponent_suggestion;
+	 	Option = 3 -> view_database;
 	 	Option = 4 -> halt;
 	 	write_ln('Please choose a valid option.'), main_menu
  	).
 
-% TODO: Record player suggestions here
-
+% Record player suggestions here
 record_suggestion :-
 	write_ln('Who did you suspect?'),
 	read(Suspect), nl,
@@ -139,9 +139,27 @@ card_shown :-
 		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
 	).
 
-% View database
-% TODO: View what other people know as well
-view_database :- forall(in_hand(Card), writeln(Card)), main_menu.
+% TODO: Record opponent suggesitons and make inferences using what we know
+record_opponent_suggestion :- true.
+
+% View database/what opponents know as well
+view_database :-
+	write_ln('Cards that you know that were not at murder scene: '),
+	forall(in_hand(Card), writef("- %t\n", [Card])), nl,
+	write_ln('Info on other players:'),
+	print_player_card_status,
+	nl,
+	main_menu.
+
+% Prints what cards/status opponents have
+% TODO: Maybe instead of outputting status as a number, output text
+print_player_card_status :-
+	player(Player), not(my_character(Player)),
+	writef("\nPlayer %t:", [Player]), nl,
+	cards_data(Card, Player, Status),
+	format('- ~w~t~25|~w', [Card, Status]), nl, % pretty formatting. fugly code.
+	fail.
+print_player_card_status :- true.
 
 % View Remaining Items
 view_remaining_characters :- forall(remaining_character(Card), writeln(Card)).
@@ -149,7 +167,7 @@ view_remaining_weapons :- forall(remaining_weapon(Card), writeln(Card)).
 view_remaining_rooms :- forall(remaining_room(Card), writeln(Card)).
 
 % gives remaining items
-remaining_character(Card) :- character(Card), not(in_hand(Card)), not(my_character(Card)).
+remaining_character(Card) :- character(Card), not(in_hand(Card)).
 remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
 remaining_room(Card) :- room(Card), not(in_hand(Card)).
 
@@ -158,13 +176,18 @@ one_character_left(Card) :- findall(1,remaining_character(Card),L), length(L,1),
 one_weapon_left(Card) :- findall(1,remaining_weapon(Card),L), length(L,1), remaining_weapon(Card).
 one_room_left(Card) :- findall(1,remaining_room(Card),L), length(L,1), remaining_room(Card). 
 
-
+% Check if a card is a valid card
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
 
-% gives final accusation
-accuse(X, Y, Z) :- one_character_left(X), one_weapon_left(Y), one_room_left(Z), 
-	write(X), tab(1), write('did it with a'), tab(1), write(Y), tab(1), write('in the'), tab(1), write(Z).
+% Check if it is possible to accuse
+can_accuse(Character, Weapon, Room) :-
+	one_character_left(Character), one_weapon_left(Weapon), one_room_left(Room),
+	write_ln('You can make an accusation!'),
+	writef("%t killed Mr. Bobby with a %t in the %t.\n\n", [Character, Weapon, Room]).
+can_accuse(_,_,_) :- true.
 
+
+% Removes everything from database so we don't need
 clear_database :-
 	retractall(cards_data(_,_,_)),
 	retractall(num_players(_)),
@@ -174,4 +197,4 @@ clear_database :-
 
 % Clear screen function taken from 
 % http://stackoverflow.com/questions/16908764/clearing-screen-in-swipl-prolog-in-windows
-clear_screen :- write('\e[2J').
+clear_screen :- write('\e[H\e[2J').
