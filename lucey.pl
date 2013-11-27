@@ -185,9 +185,9 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 		assert(cards_data(Suspect, Reveal, 1)),
 		assert(cards_data(Weapon, Reveal, 1)),
 		assert(cards_data(Room, Reveal, 1)),
-		assert(cards_data(Suspect, Reveal, 4)),
-		assert(cards_data(Weapon, Reveal, 4)),
-		assert(cards_data(Room, Reveal, 4))
+		assert(cards_data(Suspect, Player, 4)),
+		assert(cards_data(Weapon, Player, 4)),
+		assert(cards_data(Room, Player, 4))
 	),
 	main_menu.
 
