@@ -191,9 +191,9 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 	write_ln('Which card did you show?'),
 	read(Card), nl,
 	(
-		Card = Suspect -> assert(cards_data(Suspect, Player, 4));
-		Card = Weapon -> assert(cards_data(Weapon, Player, 4));
-		Card = Room -> assert(cards_data(Room, Player, 4));
+		Card = Suspect -> assert(cards_data(Suspect, Player, 3));
+		Card = Weapon -> assert(cards_data(Weapon, Player, 3));
+		Card = Room -> assert(cards_data(Room, Player, 3));
 		write_ln('Please choose a valid option.'), i_showed_card
 	),
 	main_menu.
