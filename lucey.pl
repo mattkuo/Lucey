@@ -137,7 +137,7 @@ card_shown :-
 	read(Player), nl,
 	(
 		not(player(Player)) -> write_ln('Invalid player.'), card_shown;
-		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
+		retract(cards_data(Card, Player, _)), assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
 	).
 
 % TODO: Record opponent suggesitons and make inferences using what we know
@@ -174,7 +174,7 @@ opponent_saw_card(Player, Suspect, Weapon, Room) :-
 	),
 	main_menu.
 
-%a player showed their card
+%a player showed their card therefore they may have any of the following cards
 another_opponent_has_card(Player, Suspect, Weapon, Room) :- 
 	write_ln('Who showed their card?'),
 	read(Reveal), nl,
@@ -224,9 +224,9 @@ print_player_card_status :-
 print_player_card_status :- true.
 
 % View Remaining Items
-view_remaining_characters :- forall(remaining_character(Card), writeln(Card)).
-view_remaining_weapons :- forall(remaining_weapon(Card), writeln(Card)).
-view_remaining_rooms :- forall(remaining_room(Card), writeln(Card)).
+view_remaining_characters :- forall(remaining_character(Card), writef("- %t\n", [Card])).
+view_remaining_weapons :- forall(remaining_weapon(Card), writef("- %t\n", [Card])).
+view_remaining_rooms :- forall(remaining_room(Card), writef("- %t\n", [Card])).
 
 % gives remaining items
 remaining_character(Card) :- character(Card), not(in_hand(Card)).
