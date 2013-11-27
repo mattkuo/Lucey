@@ -120,15 +120,6 @@ record_suggestion :-
 	),
 	main_menu.
 
-% Updates database for the case that no card was shown after opponent suggestion
-% Card_data set to 0 for all opponents 
-card_not_shown_opponent(Player, Card) :-
-	player(Others),
-	not(my_character(Others)),
-	not(player(Player)), % fixing this
-	retractall(cards_data(Card, Others, _)),
-	assert(cards_data(Card, Others, 0)).
-
 % Updates database for the case that no card was shown after self suggestion
 % Card_data set to 0 for all opponents 
 card_not_shown(Card) :-
@@ -166,7 +157,7 @@ record_opponent_suggestion :-
 	write_ln('Was a card shown to them?')),
 	read(Shown), nl,
 	(
-		 Shown = no -> card_not_shown_opponent(Player, Suspect), card_not_shown_opponent(Player, Weapon), card_not_shown_opponent(Player, Room);
+		 Shown = no -> card_not_shown(Suspect), card_not_shown(Weapon), card_not_shown(Room);
 		 Shown = yes -> opponent_saw_card(Player, Suspect, Weapon, Room);
 		 write_ln('Please choose a valid option.'), record_opponent_suggestion
 	),
@@ -183,8 +174,17 @@ opponent_saw_card(Player, Suspect, Weapon, Room) :-
 	),
 	main_menu.
 
-%TODO
-another_opponent_has_card(Player, Suspect, Weapon, Room) :- true.
+%a player showed their card
+another_opponent_has_card(Player, Suspect, Weapon, Room) :- 
+	write_ln('Who showed their card?'),
+	read(Reveal), nl,
+	(
+		not(player(Reveal)) -> write_ln('Invalid player.'), another_opponent_has_card;
+		assert(cards_data(Suspect, Reveal, 1)),
+		assert(cards_data(Weapon, Reveal, 1)),
+		assert(cards_data(Room, Reveal, 1))
+	),
+	main_menu.
 
 %i showed a player my card
 i_showed_card(Player, Suspect, Weapon, Room) :- 
