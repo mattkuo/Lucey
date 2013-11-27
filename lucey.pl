@@ -10,10 +10,12 @@ clue :- get_startup_data, main_menu.
 % cards_data(Card, Player, Status)
 % Card can be any character, weapon or room
 % Player is which player the data belongs to
-% Status is a number (0, 1, 2, 3):  0 - Player does not have card.
-%				 1 - Player might have card.
-%				 2 - Player has card.
-%				 3 - This is my card
+% Status is a number (0, 1, 2, 3):  
+%				 0 - Player does not have card in their hand.
+%				 1 - Player might have card in their hand.
+%				 2 - Player has card in their hand.
+%				 3 - This is my card and player has seen it
+%				 4 - Player may have seen this card
 
 :- dynamic cards_data/3.
 
@@ -182,7 +184,10 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 		not(player(Reveal)) -> write_ln('Invalid player.'), another_opponent_has_card;
 		assert(cards_data(Suspect, Reveal, 1)),
 		assert(cards_data(Weapon, Reveal, 1)),
-		assert(cards_data(Room, Reveal, 1))
+		assert(cards_data(Room, Reveal, 1)),
+		assert(cards_data(Suspect, Reveal, 4)),
+		assert(cards_data(Weapon, Reveal, 4)),
+		assert(cards_data(Room, Reveal, 4))
 	),
 	main_menu.
 
