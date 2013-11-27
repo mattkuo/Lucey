@@ -10,12 +10,13 @@ clue :- get_startup_data, main_menu.
 % cards_data(Card, Player, Status)
 % Card can be any character, weapon or room
 % Player is which player the data belongs to
-% Status is a number (0, 1, 2, 3):  
+% Status is a number (0, 1, 2, 3, 4):  
 %				 0 - Player does not have card in their hand.
 %				 1 - Player might have card in their hand.
 %				 2 - Player has card in their hand.
 %				 3 - This is my card and player has seen it
-%				 4 - Player may have seen this card
+%				 4 - This may be someone else's card and player may have seen this card
+%				 5 - This is someone else's card and player has seen this card
 
 :- dynamic cards_data/3.
 
@@ -122,6 +123,9 @@ record_suggestion :-
 	),
 	main_menu.
 
+% TODO: card was not shown to the opponent
+card_not_shown_opponent(Player, Card) :- true.
+
 % Updates database for the case that no card was shown after self suggestion
 % Card_data set to 0 for all opponents 
 card_not_shown(Card) :-
@@ -139,7 +143,8 @@ card_shown :-
 	read(Player), nl,
 	(
 		not(player(Player)) -> write_ln('Invalid player.'), card_shown;
-		retract(cards_data(Card, Player, _)), assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
+		(cards_data(Card, Player, _)) -> retract(cards_data(Card, Player, _)), card_shown;
+		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
 	).
 
 % TODO: Record opponent suggesitons and make inferences using what we know
@@ -181,13 +186,16 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 	write_ln('Who showed their card?'),
 	read(Reveal), nl,
 	(
-		not(player(Reveal)) -> write_ln('Invalid player.'), another_opponent_has_card;
-		assert(cards_data(Suspect, Reveal, 1)),
-		assert(cards_data(Weapon, Reveal, 1)),
-		assert(cards_data(Room, Reveal, 1)),
-		assert(cards_data(Suspect, Player, 4)),
-		assert(cards_data(Weapon, Player, 4)),
-		assert(cards_data(Room, Player, 4))
+		not(player(Reveal)) -> write_ln('Invalid player.'), main_menu;
+		not(cards_data(Suspect, Reveal, 2)) -> assert(cards_data(Suspect, Reveal, 1));
+		not(cards_data(Weapon, Reveal, 2)) -> assert(cards_data(Weapon, Reveal, 1));
+		not(cards_data(Room, Reveal, 2)) -> assert(cards_data(Room, Reveal, 1));
+		not(cards_data(Suspect, Reveal, 2)) -> assert(cards_data(Suspect, Player, 4));
+		not(cards_data(Weapon, Reveal, 2)) -> assert(cards_data(Weapon, Player, 4));
+		not(cards_data(Room, Reveal, 2)) -> assert(cards_data(Room, Player, 4));
+		(cards_data(Suspect, Reveal, 2))	-> assert(cards_data(Suspect, Player, 5));
+		(cards_data(Weapon, Reveal, 2))	-> assert(cards_data(Weapon, Player, 5));
+		(cards_data(Room, Reveal, 2))	-> assert(cards_data(Room, Player, 5)), main_menu
 	),
 	main_menu.
 
@@ -196,10 +204,11 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 	write_ln('Which card did you show?'),
 	read(Card), nl,
 	(
+		not(in_hand(Card)), write_ln('You do not have this card.'), i_showed_card(Player, Suspect, Weapon, Room);
 		Card = Suspect -> assert(cards_data(Suspect, Player, 3));
 		Card = Weapon -> assert(cards_data(Weapon, Player, 3));
 		Card = Room -> assert(cards_data(Room, Player, 3));
-		write_ln('Please choose a valid option.'), i_showed_card
+		write_ln('Please choose a valid option.'), i_showed_card(Player, Suspect, Weapon, Room)
 	),
 	main_menu.
 
