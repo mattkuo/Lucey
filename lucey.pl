@@ -16,7 +16,6 @@ clue :- get_startup_data, main_menu.
 %				 2 - Player has card in their hand.
 %				 3 - This is my card and player has seen it
 %				 4 - This may be someone else's card and player may have seen this card
-%				 5 - This is someone else's card and player has seen this card
 
 
 :- dynamic cards_data/3.
@@ -190,15 +189,15 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 	read(Reveal), nl,
 	(
 		not(player(Reveal)) -> write_ln('Invalid player.'), main_menu;
-		not(cards_data(Suspect, Reveal, 2)) -> assert(cards_data(Suspect, Reveal, 1));
-		not(cards_data(Weapon, Reveal, 2)) -> assert(cards_data(Weapon, Reveal, 1));
-		not(cards_data(Room, Reveal, 2)) -> assert(cards_data(Room, Reveal, 1));
-		not(cards_data(Suspect, Reveal, 2)) -> assert(cards_data(Suspect, Player, 4));
-		not(cards_data(Weapon, Reveal, 2)) -> assert(cards_data(Weapon, Player, 4));
-		not(cards_data(Room, Reveal, 2)) -> assert(cards_data(Room, Player, 4));
-		(cards_data(Suspect, Reveal, 2))	-> assert(cards_data(Suspect, Player, 5));
-		(cards_data(Weapon, Reveal, 2))	-> assert(cards_data(Weapon, Player, 5));
-		(cards_data(Room, Reveal, 2))	-> assert(cards_data(Room, Player, 5)), main_menu
+		assert(cards_data(Suspect, Reveal, 1)),
+		assert(cards_data(Weapon, Reveal, 1)),
+		assert(cards_data(Room, Reveal, 1)),
+		assert(cards_data(Suspect, Player, 4)),
+		assert(cards_data(Weapon, Player, 4)),
+		assert(cards_data(Room, Player, 4))
+		%% (cards_data(Suspect, Reveal, 2))	-> assert(cards_data(Suspect, Player, 5));
+		%% (cards_data(Weapon, Reveal, 2))	-> assert(cards_data(Weapon, Player, 5));
+		%% (cards_data(Room, Reveal, 2))	-> assert(cards_data(Room, Player, 5)), main_menu
 	),
 	main_menu.
 
@@ -214,6 +213,7 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 		write_ln('Please choose a valid option.'), i_showed_card(Player, Suspect, Weapon, Room)
 	),
 	main_menu.
+
 
 % Gives user reccomendation about what to suggest
 % We already know about this room. Best to figure out another room.
