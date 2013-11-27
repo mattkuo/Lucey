@@ -18,6 +18,7 @@ clue :- get_startup_data, main_menu.
 %				 4 - This may be someone else's card and player may have seen this card
 %				 5 - This is someone else's card and player has seen this card
 
+
 :- dynamic cards_data/3.
 
 % Cards
@@ -92,14 +93,16 @@ main_menu :-
 	write_ln('#### MAIN MENU ####'),
 	write_ln('1) Record my suggestion'),
 	write_ln('2) Record opponent suggestion'),
-	write_ln('3) View Database'),
-	write_ln('4) Exit program'),
+	write_ln('3) Suggest next move'),
+	write_ln('4) View Database'),
+	write_ln('5) Exit program'),
 	read(Option), nl,
 	(
 	 	Option = 1 -> record_suggestion;
 	 	Option = 2 -> record_opponent_suggestion;
-	 	Option = 3 -> view_database;
-	 	Option = 4 -> halt;
+        Option = 3 -> what_to_suggest;
+	 	Option = 4 -> view_database;
+	 	Option = 5 -> halt;
 	 	write_ln('Please choose a valid option.'), main_menu
  	).
 
@@ -147,7 +150,7 @@ card_shown :-
 		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
 	).
 
-% TODO: Record opponent suggesitons and make inferences using what we know
+% Record opponent suggesitons and make inferences using what we know
 record_opponent_suggestion :- 
 	writeln('Whose turn is it?'),
 	read(Player), nl,
@@ -212,6 +215,31 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 	),
 	main_menu.
 
+% Gives user reccomendation about what to suggest
+% We already know about this room. Best to figure out another room.
+what_to_suggest :-
+	write_ln('Which room are you in right now or closest to?'),
+	read(Room), nl,
+	(
+		not(room(Room)) -> write_ln('Invalid Room.'), what_to_suggest;
+		write_ln('You should suggest the following in your next turn:'),
+		in_hand(Room) -> suggest_weapon_character(Room); suggest_uknown_room(Room)
+	).
+	
+% We know the room so find out about either weapon or character
+% This always looks for weapons first instead of character
+suggest_weapon_character(Room) :-
+	weapon(Weapon), in_hand(Weapon) -> character(Character), not(in_hand(Character)),!,
+	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl;
+	character(Character), in_hand(Weapon) -> weapon(Weapon), not(in_hand(Weapon)),!,
+	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
+
+suggest_uknown_room(Room) :-
+	((in_hand(Weapon), weapon(Weapon)) ; weapon(Weapon)),
+	((in_hand(Character), character(Character)) ; character(Character)),!,
+	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
+	
+	
 % View database/what opponents know as well
 view_database :-
 	write_ln('Cards that could have been at the murder scene:'), nl,
