@@ -4,15 +4,16 @@ clue :- get_startup_data, main_menu.
 :- dynamic num_players/1.    % represents # of human players playing
 :- dynamic my_character/1.   % The user's character
 :- dynamic player/1.         % players are represented by the character they are playing as
-:- dynamic in_hand/1.        % Cards in the user's hand
+:- dynamic in_hand/1.        % Cards in the user's hand; 
 
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
 % Card can be any character, weapon or room
 % Player is which player the data belongs to
-% Status is a number (0, 1, 2):  0 - Player does not have card.
+% Status is a number (0, 1, 2, 3):  0 - Player does not have card.
 %				 1 - Player might have card.
 %				 2 - Player has card.
+%				 3 - This is my card
 
 :- dynamic cards_data/3.
 
@@ -119,7 +120,16 @@ record_suggestion :-
 	),
 	main_menu.
 
-% Updates database for the case that no card was shown after user suggestion
+% Updates database for the case that no card was shown after opponent suggestion
+% Card_data set to 0 for all opponents 
+card_not_shown_opponent(Player, Card) :-
+	player(Others),
+	not(my_character(Others)),
+	not(player(Player)), % fixing this
+	retractall(cards_data(Card, Others, _)),
+	assert(cards_data(Card, Others, 0)).
+
+% Updates database for the case that no card was shown after self suggestion
 % Card_data set to 0 for all opponents 
 card_not_shown(Card) :-
 	player(Others),
@@ -140,15 +150,67 @@ card_shown :-
 	).
 
 % TODO: Record opponent suggesitons and make inferences using what we know
-record_opponent_suggestion :- true.
+record_opponent_suggestion :- 
+	writeln('Whose turn is it?'),
+	read(Player), nl,
+	(not(player(Player)) -> write_ln('Invalid player'), record_opponent_suggestion;
+	write_ln('Who did they suspect?')),
+	read(Suspect), nl,
+	(not(character(Suspect)) -> write_ln('Invalid character'), record_opponent_suggestion;
+	write_ln('What weapon did they suspect?')),
+	read(Weapon), nl,
+	(not(weapon(Weapon)) -> write_ln('Invalid weapon'), record_opponent_suggestion;
+	write_ln('What room did they suspect?')),
+	read(Room), nl,
+	(not(room(Room)) -> write_ln('Invalid room'), record_opponent_suggestion;
+	write_ln('Was a card shown to them?')),
+	read(Shown), nl,
+	(
+		 Shown = no -> card_not_shown_opponent(Player, Suspect), card_not_shown_opponent(Player, Weapon), card_not_shown_opponent(Player, Room);
+		 Shown = yes -> opponent_saw_card(Player, Suspect, Weapon, Room);
+		 write_ln('Please choose a valid option.'), record_opponent_suggestion
+	),
+	main_menu.
+
+%an opponent was shown a card
+opponent_saw_card(Player, Suspect, Weapon, Room) :-
+	write_ln('Did you show them the card?'),
+	read(Answer), nl,
+	(
+		Answer = no -> another_opponent_has_card(Player, Suspect, Weapon, Room);
+		Answer = yes -> i_showed_card(Player, Suspect, Weapon, Room);
+		write_ln(''), record_opponent_suggestion
+	),
+	main_menu.
+
+%TODO
+another_opponent_has_card(Player, Suspect, Weapon, Room) :- true.
+
+%i showed a player my card
+i_showed_card(Player, Suspect, Weapon, Room) :- 
+	write_ln('Which card did you show?'),
+	read(Card), nl,
+	(
+		Card = Suspect -> assert(cards_data(Suspect, Player, 4));
+		Card = Weapon -> assert(cards_data(Weapon, Player, 4));
+		Card = Room -> assert(cards_data(Room, Player, 4));
+		write_ln('Please choose a valid option.'), i_showed_card
+	),
+	main_menu.
 
 % View database/what opponents know as well
 view_database :-
+	write_ln('Cards that could have been at the murder scene:'), nl,
+	write_ln('Characters'), nl,
+	view_remaining_characters, nl,
+	write_ln('Weapons'), nl,
+	view_remaining_weapons, nl,
+	write_ln('Rooms'), nl,
+	view_remaining_rooms,nl,
 	write_ln('Cards that you know that were not at murder scene: '),
 	forall(in_hand(Card), writef("- %t\n", [Card])), nl,
-	write_ln('Info on other players:'),
-	print_player_card_status,
-	nl,
+	write_ln('Opponents Knowledge:'),
+	print_player_card_status, nl,
 	main_menu.
 
 % Prints what cards/status opponents have
