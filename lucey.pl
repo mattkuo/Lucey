@@ -212,10 +212,12 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 check_hand(Reveal, Suspect, Weapon, Room) :-
 	(	
 		assert(shown(Suspect)), assert(shown(Weapon)), assert(shown(Room)),
-		(one_unknown_card(Card),
-		not(cards_data(Suspect, Reveal, 2)),
-		not(cards_data(Weapon, Reveal, 2)),
-		not(cards_data(Room, Reveal, 2))) -> assert(cards_data(Card, Reveal, 2)), assert(in_hand(Card)), retractall(shown(_)), 
+		(
+			one_unknown_card(Card),
+			not(cards_data(Suspect, Reveal, 2)),
+			not(cards_data(Weapon, Reveal, 2)),
+			not(cards_data(Room, Reveal, 2))
+		) -> assert(cards_data(Card, Reveal, 2)), assert(in_hand(Card)), retractall(shown(_)), 
 		clean_database;
 		true
 	),
