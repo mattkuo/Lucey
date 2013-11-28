@@ -126,7 +126,13 @@ record_suggestion :-
 	main_menu.
 
 % TODO: card was not shown to the opponent
-card_not_shown_opponent(Player, Card) :- true.
+card_not_shown_opponent(Player, Card) :- 	
+	player(Others),
+	not(my_character(Others)),
+	not(player(Player));
+	(cards_data(Card, Others, _)) -> retractall(cards_data(Card, Others, _));
+	assert(cards_data(Card, Others, 0)).
+
 
 % Updates database for the case that no card was shown after self suggestion
 % Card_data set to 0 for all opponents 
@@ -166,7 +172,7 @@ record_opponent_suggestion :-
 	write_ln('Was a card shown to them?')),
 	read(Shown), nl,
 	(
-		 Shown = no -> card_not_shown(Suspect), card_not_shown(Weapon), card_not_shown(Room);
+		 Shown = no -> card_not_shown_opponent(Player, Suspect), card_not_shown_opponent(Player, Weapon), card_not_shown_opponent(Player, Room);
 		 Shown = yes -> opponent_saw_card(Player, Suspect, Weapon, Room);
 		 write_ln('Please choose a valid option.'), record_opponent_suggestion
 	),
