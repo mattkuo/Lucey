@@ -10,6 +10,7 @@ clue :- get_startup_data, main_menu.
 :- dynamic player/1.         % players are represented by the character they are playing as
 :- dynamic in_hand/1.        % Cards in the user's hand; 
 :- dynamic shown/1.
+:- dynamic original/1.
 
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
@@ -88,7 +89,7 @@ input_hand :-
 	nl,
 	(Card = end -> nl ;
 	is_valid_card(Card) -> 
-		assert(in_hand(Card)), input_hand;
+		assert(in_hand(Card)), assert(original(Card)), input_hand;
 		write_ln('That is an invalid card. Please try again.'), input_hand).
 
 % Displays main menu. All procedures should return here.
@@ -255,6 +256,7 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 
 
 % Gives user reccomendation about what to suggest
+% We already know about this room. Best to figure out another room.
 what_to_suggest :-
 	write_ln('Which room are you in right now or closest to?'),
 	read(Room), nl,
@@ -265,18 +267,19 @@ what_to_suggest :-
 	), main_menu.
 	
 % We know the room so find out about either weapon or character
-% This always looks for characters first instead of weapons
+% This always looks for weapons first instead of character
 suggest_weapon_character(Room) :-
-	(weapon(Weapon), in_hand(Weapon)) -> character(Character), not(in_hand(Character)),!,
+	weapon(Weapon), in_hand(Weapon) -> character(Character), not(in_hand(Character)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl;
-	(character(Character), in_hand(Character)) -> weapon(Weapon), not(in_hand(Weapon)),!,
+	character(Character), in_hand(Weapon) -> weapon(Weapon), not(in_hand(Weapon)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
 
 suggest_unknown_room(Room) :-
 	((in_hand(Weapon), weapon(Weapon)) ; weapon(Weapon)),
 	((in_hand(Character), character(Character)) ; character(Character)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
-
+	
+	
 % View database/what opponents know as well
 view_database :-
 	clean_database,
@@ -287,8 +290,11 @@ view_database :-
 	view_remaining_weapons, nl,
 	write_ln('Rooms'), nl,
 	view_remaining_rooms,nl,
-	write_ln('Cards that you know that were not at murder scene: '),
-	forall(in_hand(Card), writef("- %t\n", [Card])), nl,
+	write_ln('Cards that you know that were not at murder scene: '), nl,
+	write_ln('My Cards'), nl,
+	forall(original(Card), writef("- %t\n", [Card])), nl,
+	write_ln('Cards Ive Seen'), nl,
+	forall(not_in_hand(Card), writef("- %t\n", [Card])), nl,
 	write_ln('Opponents Knowledge:'),
 	print_player_card_status, nl,
 	main_menu.
@@ -313,6 +319,7 @@ remaining_character(Card) :- character(Card), not(in_hand(Card)).
 remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
 remaining_room(Card) :- room(Card), not(in_hand(Card)).
 
+not_in_hand(Card) :- in_hand(Card), not(original(Card)).
 unknown_card(Card) :- shown(Card), not(in_hand(Card)).
 
 
