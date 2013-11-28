@@ -255,7 +255,6 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 
 
 % Gives user reccomendation about what to suggest
-% We already know about this room. Best to figure out another room.
 what_to_suggest :-
 	write_ln('Which room are you in right now or closest to?'),
 	read(Room), nl,
@@ -266,19 +265,18 @@ what_to_suggest :-
 	), main_menu.
 	
 % We know the room so find out about either weapon or character
-% This always looks for weapons first instead of character
+% This always looks for characters first instead of weapons
 suggest_weapon_character(Room) :-
-	weapon(Weapon), in_hand(Weapon) -> character(Character), not(in_hand(Character)),!,
+	(weapon(Weapon), in_hand(Weapon)) -> character(Character), not(in_hand(Character)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl;
-	character(Character), in_hand(Weapon) -> weapon(Weapon), not(in_hand(Weapon)),!,
+	(character(Character), in_hand(Character)) -> weapon(Weapon), not(in_hand(Weapon)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
 
 suggest_unknown_room(Room) :-
 	((in_hand(Weapon), weapon(Weapon)) ; weapon(Weapon)),
 	((in_hand(Character), character(Character)) ; character(Character)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
-	
-	
+
 % View database/what opponents know as well
 view_database :-
 	clean_database,
