@@ -131,7 +131,8 @@ card_not_shown_opponent(Player, Card) :-
 	not(my_character(Others)),
 	not(player(Player));
 	(cards_data(Card, Others, _)) -> retractall(cards_data(Card, Others, _));
-	assert(cards_data(Card, Others, 0)).
+	assert(cards_data(Card, Others, 0)),
+	clean_database.
 
 
 % Updates database for the case that no card was shown after self suggestion
@@ -152,7 +153,7 @@ card_shown :-
 	(
 		not(player(Player)) -> write_ln('Invalid player.'), card_shown;
 		(cards_data(Card, Player, _)) -> retract(cards_data(Card, Player, _)), card_shown;
-		assert(cards_data(Card, Player, 2)), assert(in_hand(Card))
+		assert(cards_data(Card, Player, 2)), assert(in_hand(Card)), clean_database
 	).
 
 % Record opponent suggesitons and make inferences using what we know
@@ -200,10 +201,8 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 		assert(cards_data(Room, Reveal, 1)),
 		assert(cards_data(Suspect, Player, 4)),
 		assert(cards_data(Weapon, Player, 4)),
-		assert(cards_data(Room, Player, 4))
-		%% (cards_data(Suspect, Reveal, 2))	-> assert(cards_data(Suspect, Player, 5));
-		%% (cards_data(Weapon, Reveal, 2))	-> assert(cards_data(Weapon, Player, 5));
-		%% (cards_data(Room, Reveal, 2))	-> assert(cards_data(Room, Player, 5)), main_menu
+		assert(cards_data(Room, Player, 4)),
+		clean_database
 	),
 	main_menu.
 
@@ -216,6 +215,7 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 		Card = Suspect -> assert(cards_data(Suspect, Player, 3));
 		Card = Weapon -> assert(cards_data(Weapon, Player, 3));
 		Card = Room -> assert(cards_data(Room, Player, 3));
+		clean_database,
 		write_ln('Please choose a valid option.'), i_showed_card(Player, Suspect, Weapon, Room)
 	),
 	main_menu.
@@ -295,6 +295,18 @@ can_accuse(Character, Weapon, Room) :-
 	write_ln('You can make an accusation!'),
 	writef("%t killed Mr. Bobby with a %t in the %t.\n\n", [Character, Weapon, Room]).
 can_accuse(_,_,_) :- true.
+
+%make the database clean
+clean_database :- 
+	(
+		((cards_data(Card, Player, 2)), (cards_data(Card, Player, 4))) -> retractall(cards_data(Card, Player, 4)), clean_database;
+		((cards_data(Card, Player, 2)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), clean_database;
+		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 0))) -> retractall(cards_data(Card, Player, 0)), clean_database;
+		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 4))) -> retractall(cards_data(Card, Player, 4)), clean_database;
+		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), clean_database;
+		((cards_data(Card, Player, 0)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), main_menu;
+		main_menu
+	).
 
 
 % Removes everything from database so we don't need
