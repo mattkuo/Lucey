@@ -245,7 +245,7 @@ i_showed_card(Player, Suspect, Weapon, Room) :-
 	write_ln('Which card did you show?'),
 	read(Card), nl,
 	(
-		not(in_hand(Card)), write_ln('You do not have this card.'), i_showed_card(Player, Suspect, Weapon, Room);
+		not(original(Card)), write_ln('You do not have this card.'), i_showed_card(Player, Suspect, Weapon, Room);
 		Card = Suspect -> assert(cards_data(Suspect, Player, 3));
 		Card = Weapon -> assert(cards_data(Weapon, Player, 3));
 		Card = Room -> assert(cards_data(Room, Player, 3));
