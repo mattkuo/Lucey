@@ -5,6 +5,7 @@ clue :- get_startup_data, main_menu.
 :- dynamic my_character/1.   % The user's character
 :- dynamic player/1.         % players are represented by the character they are playing as
 :- dynamic in_hand/1.        % Cards in the user's hand; 
+:- dynamic shown/1.
 
 % Assigns a "status" to each card.
 % cards_data(Card, Player, Status)
@@ -125,7 +126,7 @@ record_suggestion :-
 	),
 	main_menu.
 
-% TODO: card was not shown to the opponent
+% Card was not shown to an opponent
 card_not_shown_opponent(Player, Card) :- 	
 	player(Others),
 	not(my_character(Others)),
@@ -202,7 +203,21 @@ another_opponent_has_card(Player, Suspect, Weapon, Room) :-
 		assert(cards_data(Suspect, Player, 4)),
 		assert(cards_data(Weapon, Player, 4)),
 		assert(cards_data(Room, Player, 4)),
+		check_hand(Reveal, Suspect, Weapon, Room),
 		clean_database
+	),
+	main_menu.
+
+%if i've seen 2/3 of these cards before, 3rd is shown
+check_hand(Reveal, Suspect, Weapon, Room) :-
+	(	
+		assert(shown(Suspect)), assert(shown(Weapon)), assert(shown(Room)),
+		(one_unknown_card(Card),
+		not(cards_data(Suspect, Reveal, 2)),
+		not(cards_data(Weapon, Reveal, 2)),
+		not(cards_data(Room, Reveal, 2))) -> assert(cards_data(Card, Reveal, 2)), assert(in_hand(Card)), retractall(shown(_)), 
+		clean_database;
+		true
 	),
 	main_menu.
 
@@ -248,6 +263,7 @@ suggest_uknown_room(Room) :-
 	
 % View database/what opponents know as well
 view_database :-
+	clean_database,
 	write_ln('Cards that could have been at the murder scene:'), nl,
 	write_ln('Characters'), nl,
 	view_remaining_characters, nl,
@@ -281,10 +297,15 @@ remaining_character(Card) :- character(Card), not(in_hand(Card)).
 remaining_weapon(Card) :- weapon(Card), not(in_hand(Card)).
 remaining_room(Card) :- room(Card), not(in_hand(Card)).
 
+unknown_card(Card) :- shown(Card), not(in_hand(Card)).
+
+
 % checks when there is one card left in each category
 one_character_left(Card) :- findall(1,remaining_character(Card),L), length(L,1), remaining_character(Card).
 one_weapon_left(Card) :- findall(1,remaining_weapon(Card),L), length(L,1), remaining_weapon(Card).
 one_room_left(Card) :- findall(1,remaining_room(Card),L), length(L,1), remaining_room(Card). 
+
+one_unknown_card(Card) :- findall(1,unknown_card(Card),L), length(L,1), unknown_card(Card).
 
 % Check if a card is a valid card
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
@@ -304,8 +325,8 @@ clean_database :-
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 0))) -> retractall(cards_data(Card, Player, 0)), clean_database;
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 4))) -> retractall(cards_data(Card, Player, 4)), clean_database;
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), clean_database;
-		((cards_data(Card, Player, 0)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), main_menu;
-		main_menu
+		((cards_data(Card, Player, 0)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1));
+		true
 	).
 
 
