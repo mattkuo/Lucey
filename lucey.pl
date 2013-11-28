@@ -198,11 +198,14 @@ record_suggestion :-
 card_not_shown_opponent(Player, Card) :- 	
 	player(Others),
 	not(my_character(Others)),
-	not(player(Player));
-	(cards_data(Card, Others, _)) -> retractall(cards_data(Card, Others, _));
+	not(player(Player)),
+	retractall(cards_data(Card, Others, _)),
 	assert(cards_data(Card, Others, 0)),
-	clean_database.
-
+	% If player and user doesn't have card then nobo
+	(
+		(cards_data(Card, Player, 0), not(in_hand(Card))) -> put_in_envelope(Card), clean_database;
+		clean_database
+	).
 
 % Updates database for the case that no card was shown after self suggestion
 % Card_data set to 0 for all opponents 
@@ -210,7 +213,16 @@ card_not_shown(Card) :-
 	player(Others),
 	not(my_character(Others)),
 	retractall(cards_data(Card, Others, _)),
-	assert(cards_data(Card, Others, 0)).
+	assert(cards_data(Card, Others, 0)),
+	not(in_hand(Card)) -> put_in_envelope(Card).
+
+% If the card is in the envelope, we can update all other cards of the same type to be known (in_hand)
+put_in_envelope(Card) :-
+	(
+		weapon(Card) -> forall((weapon(OtherWeapons), OtherWeapons \= Card), assert(in_hand(OtherWeapons)));
+		character(Card) -> forall((character(OtherCharacters), OtherCharacters \= Card), assert(in_hand(OtherCharacters)));
+		room(Card) -> forall((room(OtherRooms), OtherRooms \= Card), assert(in_hand(OtherRooms)))
+	).
 
 % Updates what player now knows and the opponent player who showed that card
 card_shown :-
@@ -314,8 +326,8 @@ what_to_suggest :-
 	(
 		not(room(Room)) -> write_ln('Invalid Room.'), what_to_suggest;
 		write_ln('You should suggest the following in your next turn:'),
-		in_hand(Room) -> suggest_weapon_character(Room); suggest_uknown_room(Room)
-	).
+		in_hand(Room) -> suggest_weapon_character(Room); suggest_unknown_room(Room)
+	), main_menu.
 	
 % We know the room so find out about either weapon or character
 % This always looks for weapons first instead of character
@@ -325,7 +337,7 @@ suggest_weapon_character(Room) :-
 	character(Character), in_hand(Weapon) -> weapon(Weapon), not(in_hand(Weapon)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
 
-suggest_uknown_room(Room) :-
+suggest_unknown_room(Room) :-
 	((in_hand(Weapon), weapon(Weapon)) ; weapon(Weapon)),
 	((in_hand(Character), character(Character)) ; character(Character)),!,
 	writef("%t, %t, %t\n", [Character, Weapon, Room]), nl.
@@ -400,7 +412,7 @@ clean_database :-
 	).
 
 
-% Removes everything from database so we don't need
+% Removes everything from database
 clear_database :-
 	retractall(cards_data(_,_,_)),
 	retractall(num_players(_)),
