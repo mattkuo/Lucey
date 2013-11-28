@@ -348,7 +348,9 @@ clean_database :-
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 0))) -> retractall(cards_data(Card, Player, 0)), clean_database;
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 4))) -> retractall(cards_data(Card, Player, 4)), clean_database;
 		((cards_data(Card, Player, 3)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), clean_database;
-		((cards_data(Card, Player, 0)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1));
+		((cards_data(Card, Player, 0)), (cards_data(Card, Player, 1))) -> retractall(cards_data(Card, Player, 1)), clean_database;
+		(original(Card), (cards_data(Card, _, 1))) -> retractall(cards_data(Card, _, 1)), clean_database;
+		(original(Card), (cards_data(Card, _, 4))) -> retractall(cards_data(Card, _, 4));
 		true
 	).
 
