@@ -236,7 +236,7 @@ check_hand(Reveal, Suspect, Weapon, Room) :-
 			not(cards_data(Room, Reveal, 2))
 		) -> assert(cards_data(Card, Reveal, 2)), assert(in_hand(Card)), retractall(shown(_)), 
 		clean_database;
-		true
+		retractall(shown(_))
 	),
 	main_menu.
 
@@ -293,7 +293,7 @@ view_database :-
 	write_ln('Cards that you know that were not at murder scene: '), nl,
 	write_ln('My Cards'), nl,
 	forall(original(Card), writef("- %t\n", [Card])), nl,
-	write_ln('Cards Ive Seen'), nl,
+	write_ln('Cards I know were not at crime scene'), nl,
 	forall(not_in_hand(Card), writef("- %t\n", [Card])), nl,
 	write_ln('Opponents Knowledge:'),
 	print_player_card_status, nl,
@@ -329,6 +329,11 @@ one_weapon_left(Card) :- findall(1,remaining_weapon(Card),L), length(L,1), remai
 one_room_left(Card) :- findall(1,remaining_room(Card),L), length(L,1), remaining_room(Card). 
 
 one_unknown_card(Card) :- findall(1,unknown_card(Card),L), length(L,1), unknown_card(Card).
+
+is_in_envelope(Card) :-
+	weapon(Card) -> findall(1,remaining_weapon(Card),L), length(L,1);
+	character(Card) -> findall(1,remaining_character(Card),L), length(L,1);
+	room(Card) -> findall(1,remaining_room(Card),L), length(L,1).
 
 % Check if a card is a valid card
 is_valid_card(Card) :- character(Card);weapon(Card);room(Card).
