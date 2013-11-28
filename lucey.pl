@@ -12,7 +12,7 @@
 
 %% A FEW NOTES
 
-% - all commands in this program must be terminated with a "."
+% - all commands in this program must be terminated with a "." and entered with the Enter key on your keyboard
 % - this program assumes that game pieces are the standard/default Clue board game pieces
 
 %% HOW THE PROGRAM WORKS
